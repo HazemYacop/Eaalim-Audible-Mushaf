@@ -154,7 +154,10 @@ app.post(
     if (name.length > 50) return res.status(400).json({ error: "Too long" });
     try {
       const { rows } = await pool.query(
-        "INSERT INTO hokm(name)VALUES($1) RETURNING id,name",
+        `INSERT INTO hokm (name, position)
+              VALUES ($1,
+                    COALESCE( (SELECT MAX(position) + 1 FROM hokm), 1 ))
+              RETURNING id, name, position`,
         [name]
       );
       res.status(201).json(rows[0]);
