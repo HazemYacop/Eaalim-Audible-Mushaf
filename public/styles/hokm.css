@@ -1,0 +1,96 @@
+.juza {
+  gap: 1vw;
+  cursor: grab;
+}
+
+.dragger {
+  cursor: grab;
+}
+
+.juza.dragging {
+  opacity: 0.6;
+  cursor: grabbing;
+}
+
+.displayer-wrapper {
+  gap: 3vh;
+}
+
+.ajzaa-editor {
+  flex-direction: column;
+  gap: 5vh;
+}
+
+.ajzaa-control-panel {
+  gap: 0.4vw;
+}
+
+.ajzaa-container {
+  border: 0.1vw solid #000;
+  width: 67vw;
+  flex-direction: column;
+  gap: 2vh;
+  padding: 4vh 0;
+}
+
+.juza {
+  background-color: #d9d9d9;
+  width: 90%;
+  border-radius: 1.5vw;
+  justify-content: space-between;
+  padding: 2vh 2vw;
+  cursor: default;
+}
+
+.juza-controls > button, .juza-controls > a {
+    padding: 1.3vh 2.1vw;
+    font-size: .8vw;
+}
+
+.juza-controls > button:hover {
+    box-shadow: none;
+}
+
+#rename-hokm-btn {
+  background-color: #ae5d27;
+}
+
+#rename-hokm-btn:hover {
+  box-shadow: 0.3vw 0.3vw 2vw 0.1vw #ae5d27;
+}
+
+#add-juza-btn {
+  background-color: #27ae37;
+}
+
+#add-juza-btn:hover {
+  box-shadow: 0.3vw 0.3vw 2vw 0.1vw #27ae37;
+}
+
+.rename {
+  background-color: #ae5d27;
+}
+
+.rename:hover {
+  box-shadow: 0.3vw 0.3vw 2vw 0.1vw #ae5d27;
+  background-color: #9c5323;
+}
+
+.edit {
+  background-color: #273eae;
+}
+
+.edit:hover {
+  box-shadow: 0.3vw 0.3vw 2vw 0.1vw #273eae;
+  background-color: #1f3087;
+}
+
+.juza-name {
+  gap: 1vw;
+}
+
+.juza-title {
+  font-family: "Roboto", sans-serif;
+  font-weight: 600;
+  font-size: 1vw;
+}

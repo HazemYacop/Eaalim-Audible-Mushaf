@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles/core.css" />
+    <link rel="stylesheet" href="/styles/header.css" />
+    <link rel="stylesheet" href="/styles/sidebar.css" />
+    <link rel="stylesheet" href="/styles/juza.css" />
+    <title>Juza editor</title>
+  </head>
+  <body>
+    <div class="body-wrapper centered">
+      <%- include('partials/header.ejs') %>
+
+      <div class="main-wrapper">
+        <main class="centered">
+          <%- include('partials/sidebar.ejs') %>
+
+          <div class="displayer centered">
+            <div class="displayer-wrapper centered">
+              <h4 id="current-location-wrapper">
+                <a id="current-location" href="/factory/<%= hokm.id %>/"
+                  ><%= hokm.name %></a
+                >
+                ->
+                <a
+                  id="current-location"
+                  href="/factory/<%= hokm.id %>/<%= juza.id %>"
+                  >Juz' <%= juza.number %></a
+                >
+              </h4>
+
+              <div class="juza-control-panel centered">
+                <button id="new-image-btn" class="editor-btn">
+                  Add A New Image
+                </button>
+                <button id="select-audio-btn" class="editor-btn">
+                  + Select Audio
+                </button>
+                <button id="submit-changes-btn" class="editor-btn">
+                  Submit
+                </button>
+              </div>
+
+              <input type="file" id="imageFile" accept="image/*" hidden />
+              <p id="selected-audio" hidden></p>
+
+              <div class="juza-editor centered">
+                <div id="page-strip" class="centered"></div>
+                <div id="viewer">
+                  <img id="page-img" src="" alt="page" />
+                  <canvas id="hotspot-layer"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
+    <script>
+      $(() => {
+        const juzaId = "<%= juza.id %>";
+        const csrf = "<%= csrfToken %>";
+
+        const pageRects = {};
+        let currentPageId = null;
+        let currentRects = [];
+
+        $("#new-image-btn").on("click", () => {
+          $('<input type="file" accept="image/*">')
+            .on("change", function () {
+              if (!this.files.length) return;
+              const fd = new FormData();
+              fd.append("file", this.files[0]);
+              $.ajax({
+                url: `/factory/${juzaId}/add-page`,
+                type: "POST",
+                headers: { "csrf-token": csrf },
+                processData: false,
+                contentType: false,
+                data: fd,
+                success: (p) => {
+                  const n = $(".thumbnail").length + 1;
+                  $strip.append(`
+    <div class="thumbnail" data-id="${p.id}">
+      <span class="num">${n}</span>
+      <span class="del">✕</span>
+      <img src="${p.image_url}">
+    </div>
+  `);
+                  loadPage(p);
+                },
+              });
+            })
+            .click();
+        });
+
+        /* ---------- persistent audio -------------------------------- */
+        let selectedAudio = "";
+
+        /* ---------- page strip -------------------------------------- */
+        const $strip = $("#page-strip");
+        $.getJSON(`/factory/${juzaId}/pages`, (pages) => {
+          pages.forEach((p, i) =>
+            $strip.append(`<div class="thumbnail" data-id="${p.id}">
+    <span class="num">${i + 1}</span>
+    <span class="del">✕</span>
+    <img src="${p.image_url}">
+  </div>`)
+          );
+          if (pages.length) loadPage(pages[0]);
+        });
+
+        $strip.on("click", ".thumbnail", function () {
+          if (currentPageId) {
+            $.ajax({
+              url: `/factory/page/${currentPageId}/hotspots`,
+              type: "PATCH",
+              headers: { "csrf-token": csrf },
+              contentType: "application/json",
+              data: JSON.stringify({ hotspots: currentRects }),
+            });
+          }
+          $.getJSON(`/factory/page/${$(this).data("id")}`, loadPage);
+        });
+
+        $strip.on("click", ".del", function (e) {
+          e.stopPropagation();
+          const thumb = $(this).closest(".thumbnail");
+          const pageId = thumb.data("id");
+          Swal.fire({
+            title: "Delete this page?",
+            icon: "warning",
+            showCancelButton: true,
+          }).then((r) => {
+            if (!r.isConfirmed) return;
+            $.ajax({
+              url: `/factory/page/${pageId}`,
+              type: "DELETE",
+              headers: { "csrf-token": csrf },
+              success: () => {
+                thumb.remove();
+                $(".thumbnail .num").each((i, el) => $(el).text(i + 1)); // renumber
+                delete pageRects[pageId];
+                if (pageId === currentPageId) {
+                  const first = $(".thumbnail").first().data("id");
+                  first
+                    ? $.getJSON(`/factory/page/${first}`, loadPage)
+                    : $("#page-img").attr("src", "").off("load");
+                }
+              },
+            });
+          });
+        });
+
+        new Sortable($strip[0], {
+          animation: 150,
+          draggable: ".thumbnail",
+          onEnd() {
+            saveOrder();
+          },
+        });
+        function saveOrder() {
+          const ids = $(".thumbnail")
+            .map((_, e) => $(e).data("id"))
+            .get();
+          $.ajax({
+            url: `/factory/${juzaId}/reorder-pages`,
+            type: "POST",
+            headers: { "csrf-token": csrf },
+            contentType: "application/json",
+            data: JSON.stringify({ ids }),
+          });
+        }
+
+        /* ---------- viewer + hotspots ------------------------------- */
+        const $viewer = $("#viewer");
+        function loadPage(p) {
+          currentPageId = p.id;
+          currentRects = Array.isArray(p.hotspots)
+            ? p.hotspots
+            : JSON.parse(p.hotspots || "[]");
+
+          currentPageId = p.id;
+          currentRects =
+            pageRects[p.id] ??
+            (pageRects[p.id] = Array.isArray(p.hotspots)
+              ? p.hotspots
+              : JSON.parse(p.hotspots || "[]"));
+          $("#page-img").attr("src", p.image_url).on("load", renderRects);
+          $(".thumbnail").removeClass("sel");
+          $(`[data-id="${p.id}"]`).addClass("sel");
+          $("#page-img").attr("draggable", false);
+        }
+        function renderRects() {
+          $(".rect", $viewer).remove();
+          currentRects.forEach((r, i) => addRectDom(r, i));
+        }
+        function addRectDom(r, idx) {
+          const $d = $(
+            `<div class="rect"><span class="x">✕</span></div>`
+          ).appendTo($viewer);
+          positionRect($d, r);
+          $d.draggable({
+            containment: "parent",
+            stop() {
+              updateCoords($d, idx);
+            },
+          });
+          $d.on("click", ".x", function (e) {
+            e.stopPropagation();
+            currentRects.splice(idx, 1);
+            pageRects[currentPageId] = currentRects;
+            renderRects();
+          });
+        }
+        function positionRect($d, r) {
+          $d.css({
+            left: r.x * 100 + "%",
+            top: r.y * 100 + "%",
+            width: r.w * 100 + "%",
+            height: r.h * 100 + "%",
+          });
+        }
+        function updateCoords($d, idx) {
+          const vw = $viewer.width(),
+            vh = $viewer.height();
+          currentRects[idx] = {
+            ...currentRects[idx],
+            x: $d.position().left / vw,
+            y: $d.position().top / vh,
+          };
+          pageRects[currentPageId] = currentRects;
+        }
+
+        /* draw new rectangle by drag on viewer */
+        let startX, startY;
+        $viewer.on("mousedown", (e) => {
+          e.preventDefault();
+          if ($(e.target).closest(".rect").length) return;
+          const ofs = $viewer.offset();
+          startX = e.pageX - ofs.left;
+          startY = e.pageY - ofs.top;
+          $(window).on("mousemove.draw", move).one("mouseup.draw", up);
+          function move(ev) {
+            const curX = ev.pageX - ofs.left,
+              curY = ev.pageY - ofs.top;
+            $("#ghost").remove();
+            $('<div id="ghost">')
+              .appendTo($viewer)
+              .css({
+                left: Math.min(startX, curX),
+                top: Math.min(startY, curY),
+                width: Math.abs(curX - startX),
+                height: Math.abs(curY - startY),
+              });
+          }
+          function up(ev) {
+            $("#ghost").remove();
+            $(window).off("mousemove.draw");
+            const curX = ev.pageX - ofs.left,
+              curY = ev.pageY - ofs.top;
+            const r = {
+              x: Math.min(startX, curX) / $viewer.width(),
+              y: Math.min(startY, curY) / $viewer.height(),
+              w: Math.abs(curX - startX) / $viewer.width(),
+              h: Math.abs(curY - startY) / $viewer.height(),
+              ...(selectedAudio && { audio: selectedAudio }),
+            };
+            currentRects.push(r);
+            pageRects[currentPageId] = currentRects;
+            addRectDom(r, currentRects.length - 1);
+          }
+        });
+
+        /* ---------- controls ---------------------------------------- */
+        $("#select-audio-btn").on("click", async () => {
+          const { isConfirmed } = await Swal.fire({
+            title: "Upload audio?",
+            showDenyButton: true,
+            confirmButtonText: "Upload",
+            denyButtonText: "Paste URL",
+          });
+
+          if (isConfirmed) {
+            const file = await new Promise((res) => {
+              $('<input type="file" accept="audio/*">')
+                .on("change", (e) => res(e.target.files[0]))
+                .click();
+            });
+            if (!file) return;
+
+            const fd = new FormData();
+            fd.append("file", file);
+            $.ajax({
+              url: "/factory/upload-audio",
+              type: "POST",
+              headers: { "csrf-token": csrf },
+              processData: false,
+              contentType: false,
+              data: fd,
+              success: (d) => {
+                selectedAudio = d.url;
+                $("#selected-audio").text(file.name).show();
+              },
+            });
+          } else {
+            const { value: url } = await Swal.fire({
+              title: "Paste audio URL",
+              input: "text",
+            });
+            if (url) {
+              selectedAudio = url;
+              $("#selected-audio").text(url).show();
+            }
+          }
+        });
+
+        $("#submit-changes-btn").on("click", () => {
+          $.ajax({
+            url: `/factory/page/${currentPageId}/hotspots`,
+            type: "PATCH",
+            headers: { "csrf-token": csrf },
+            contentType: "application/json",
+            data: JSON.stringify({ hotspots: currentRects }),
+            success: () => Swal.fire("Saved", "", "success"),
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

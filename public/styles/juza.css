@@ -1,0 +1,159 @@
+#viewer {
+  position: relative;
+}
+
+#page-img {
+  max-width: 100%;
+  display: block;
+}
+
+#hotspot-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.selected-thumb {
+  box-shadow: 0 0 0.4vw #ae2727;
+}
+
+#page-strip {
+  display: flex;
+  gap: 1vw;
+  overflow-x: auto;
+  max-width: 70vw;
+  padding-bottom: 0.25rem;
+  padding-left: 3vw;
+}
+
+.thumbnail {
+  flex: 0;
+  position: relative;
+  cursor: pointer;
+  width: 8vw;
+}
+
+.thumbnail img {
+  display: block;
+  width: 5vw;
+}
+
+.thumbnail .del {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  background: #fff;
+  border: 1px solid #ae2727;
+  border-radius: 50%;
+  padding: 0 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.thumbnail .num {
+  position: absolute;
+  left: 2px;
+  top: 0;
+  font-size: 0.65rem;
+  background: #fff;
+  padding: 0 0.2rem;
+  border: 1px solid #999;
+}
+
+.thumbnail.sel {
+  outline: 2px solid #2f80ed;
+}
+
+#viewer {
+  position: relative;
+}
+
+.rect {
+  position: absolute;
+  border: 2px solid #ae2727;
+  background: rgba(174, 39, 39, 0.15);
+  cursor: move;
+}
+
+.rect .x {
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  background: #fff;
+  border: 1px solid #ae2727;
+  border-radius: 50%;
+  padding: 0 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+#ghost {
+  position: absolute;
+  border: 1px dashed #555;
+  background: rgba(0, 0, 0, 0.05);
+  pointer-events: none;
+}
+
+.juza-control-panel {
+  gap: 1.5vw;
+}
+
+#new-image-btn {
+  background-color: #ae5d27;
+}
+
+#new-image-btn:hover {
+  box-shadow: 0.3vw 0.3vw 2vw 0.1vw #ae5d27;
+  background-color: #9c5323;
+}
+
+#submit-changes-btn {
+  background-color: #28e587;
+}
+
+#submit-changes-btn:hover {
+  box-shadow: 0.3vw 0.3vw 2vw 0.1vw #28e587;
+  background-color: #22c071;
+}
+
+.displayer {
+  flex-direction: column;
+  justify-content: left;
+  gap: 3vh;
+  padding: 3vh 2vw;
+}
+
+.displayer-wrapper {
+  width: 90%;
+  gap: 5vh;
+}
+
+#page-strip {
+  width: 90%;
+}
+
+.juza-editor {
+  flex-direction: column;
+  gap: 3vh;
+}
+
+.thumbnail > img {
+  width: 5vw;
+}
+
+.thumbnail .del {
+  position: absolute;
+  right: 2px;
+  top: 0;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: #b00;
+}
+
+.thumbnail:hover .del {
+  color: #e33;
+}
+
+#page-img[src=""] {
+  display: none;
+}

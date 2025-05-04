@@ -1,0 +1,94 @@
+.ahkam {
+  width: 100%;
+  display: grid;
+  gap: 5vw;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.hokm {
+  background-color: #580101;
+  border-radius: 0.5vw;
+  padding: 7vh 2.4vw;
+  flex-direction: column;
+  gap: 3vh;
+}
+
+.hokm-container {
+  flex-direction: column;
+  gap: 7vh;
+}
+
+.hokm.dragging {
+  opacity: 0.6;
+  cursor: grabbing;
+}
+.dragger {
+  cursor: grab;
+  color: white;
+  font-size: 1.2vw;
+}
+
+.thumbnail {
+  border-radius: 0.5vw;
+  width: 9vw;
+}
+
+.hokm-titles {
+  font-family: "Montserrat", sans-serif;
+  color: #fff;
+  text-align: center;
+  flex-direction: column;
+  gap: 1vh;
+}
+
+.hokm-title {
+  font-weight: 600;
+  font-size: 1.1vw;
+}
+
+.hokm-description {
+  font-weight: 500;
+  font-size: 0.8vw;
+}
+
+.edit-btn {
+  color: #fff;
+  background-color: #ae2727;
+  font-family: "Tilt Warp", sans-serif;
+  border-radius: 1vw;
+  padding: 2vh 5vw;
+  transition: 0.2s;
+}
+
+.edit-btn:hover {
+  color: #fcfcfc;
+  background-color: #982424;
+  border-radius: 1.1vw;
+  transform: translateY(-0.3vh);
+}
+
+#add-hokm {
+  background-color: grey;
+  color: #fff;
+  transition: 0.2s;
+}
+
+#add-hokm:hover {
+  transform: translateY(-0.7vh);
+  background-color: rgb(97, 97, 97);
+}
+
+#add-hokm > button {
+  background-color: rgb(195, 195, 195);
+  border-radius: 50%;
+  padding: 3vh 2vw;
+  font-size: 2vw;
+}
+
+.swal2-title {
+  font-family: "Montserrat", sans-serif;
+}
+
+.swal2-confirm {
+  background-color: #ae2727;
+}

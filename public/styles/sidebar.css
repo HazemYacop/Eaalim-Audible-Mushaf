@@ -1,0 +1,78 @@
+.sidebar {
+  display: flex;
+  grid-column: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.sidebar-section {
+  background-color: #fff;
+  border-radius: 0.5vw;
+  padding: 1vh 2vw;
+}
+
+.sidebar-nav {
+  padding: 3vh;
+  flex-direction: column;
+  align-items: start;
+  gap: 1vh;
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-size: 0.95vw;
+}
+
+.sidebar-nav > li {
+  width: 100%;
+}
+
+.sidebar-item {
+  padding: 1vh 2vw;
+  gap: 1vw;
+  justify-content: left;
+  border-radius: 0.5vw;
+  height: 4vh;
+  transition: 0.2s;
+  color: #000;
+}
+
+.sidebar-item > i {
+  color: #aeaeae;
+}
+
+.sidebar-item:hover {
+  transform: translateY(-0.3vh);
+  background-color: #dedede;
+}
+
+.active-item {
+  background-color: #2f81ed2c;
+  color: #2f80ed;
+}
+
+.active-item:hover {
+  background-color: #2f81ed77;
+}
+
+.active-item > i {
+  color: #2f80ed;
+}
+
+.webapp-version {
+  padding: 3vh 0;
+  flex-direction: column;
+  gap: 1vh;
+}
+
+#webapp-title {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: 1.25vw;
+}
+
+#version {
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-size: 0.7vw;
+  color: #aeaeae;
+}

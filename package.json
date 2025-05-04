@@ -1,0 +1,25 @@
+{
+  "name": "eaalim-audible-mushaf",
+  "version": "1.0.0",
+  "description": "Turns Eaalim Mushaf audible",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Hazem Yacop",
+  "license": "ISC",
+  "dependencies": {
+    "argon2": "^0.43.0",
+    "csurf": "^1.10.0",
+    "dotenv": "^16.5.0",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.1.0",
+    "multer": "^1.4.5-lts.2",
+    "pg": "^8.15.6",
+    "sweetalert2": "^11.19.1"
+  }
+}

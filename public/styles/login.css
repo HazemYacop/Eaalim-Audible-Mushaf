@@ -1,0 +1,82 @@
+.logo {
+  gap: 1vw;
+}
+
+#logo-image {
+  width: 3.39vw;
+}
+
+.logo-text {
+  color: var(--primary);
+}
+
+#logo-title {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: 1.25vw;
+}
+
+#logo-slogan {
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-size: 0.83vw;
+}
+
+.body-wrapper {
+  flex-direction: column;
+  padding-top: 15vh;
+  gap: 17vh;
+}
+
+#login-form {
+  gap: 3vh;
+  flex-direction: column;
+}
+
+.form-fields {
+  flex-direction: column;
+  gap: 1vh;
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-size: 0.9vw;
+}
+
+#welcome-back {
+  font-family: "Roboto", sans-serif;
+  font-weight: 700;
+  font-size: 1.2vw;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 1vh;
+}
+
+.login-field > input {
+  background-color: #f1f1f1;
+  border-radius: 0.5vw;
+  min-height: 6vh;
+  min-width: 18vw;
+  border: none;
+  padding-left: 2vw;
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-size: 0.9vw;
+}
+
+#submit-btn {
+  min-height: 5vh;
+  min-width: 17vw;
+  border-radius: .5vw;
+  background-color: var(--primary);
+  color: white;
+  width: 100%;
+  transition: .2s;
+}
+
+#submit-btn:hover {
+  background-color: #ae2727da;
+  transform: translateY(-.4vh);
+}

@@ -1,0 +1,242 @@
+/* ───── Layout helpers ───────────────────────────────────────── */
+.header {
+  width: 100%;
+}
+.header,
+.logo,
+.displayer,
+#view-form,
+.page-slider,
+.show-audios-checkbox {
+  display: flex !important;
+  align-items: center;
+}
+
+.header {
+  justify-content: space-around;
+  background: rgba(255, 255, 255, 0.57);
+  box-shadow: 4px 4px 35px 1px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(9px);
+  height: 10vh;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  color: #fff;
+}
+.logo {
+  gap: 1vw;
+}
+#logo-image {
+  width: 3.39vw;
+}
+
+/* ───── Branding ─────────────────────────────────────────────── */
+.logo-text {
+  color: var(--primary);
+}
+#logo-title {
+  font: 700 1.25vw "Montserrat", sans-serif;
+}
+#logo-slogan {
+  font: 500 0.83vw "Roboto", sans-serif;
+}
+
+/* ───── Dropdowns ────────────────────────────────────────────── */
+#view-form {
+  gap: 1.5vw;
+}
+.list-dropdown {
+  position: relative;
+  display: inline-block;
+}
+.dropdown-btn {
+  width: 15vw;
+  padding: 2vh 0;
+  gap: 2vw;
+  background: var(--primary);
+  color: var(--white);
+  border-radius: 0.3vw;
+  font: 600 1vw "Roboto", sans-serif;
+  transition: box-shadow 0.2s;
+}
+.dropdown-btn:hover {
+  box-shadow: 0.3vw 0.3vw 2vw 0.1vw #ae2727be;
+}
+.dropdown-btn i {
+  transition: transform 0.3s;
+}
+.dropdown-btn i.rotated {
+  transform: rotate(180deg);
+}
+
+.dropdown-list {
+  opacity: 0;
+  transform: translateY(-0.52vw);
+  pointer-events: none;
+  transition: 0.3s;
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border-radius: 0.3vw;
+  box-shadow: 0.3vw 0.3vw 2vw 0.1vw rgba(0, 0, 0, 0.25);
+  max-height: 18rem;
+  overflow-y: auto;
+  z-index: 100;
+}
+.dropdown-list.show {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.dropdown-list li {
+  padding: 0.52vw 0.78vw;
+  cursor: pointer;
+  font: 1.04vw "Basic", sans-serif;
+  color: var(--primary);
+  transition: 0.2s;
+}
+.dropdown-list li:hover {
+  background: #fff;
+}
+
+#ajzaa-list li {
+  color: #000;
+}
+#ajzaa-list li:hover {
+  text-decoration: underline;
+}
+
+/* ───── Viewer & navigation ──────────────────────────────────── */
+.displayer {
+  flex-direction: column;
+  padding-bottom: 5vh;
+}
+.page-slider {
+  gap: 5vw;
+}
+.nav-arrow {
+  font-size: 2rem;
+  color: #333;
+  padding: 0 0.6rem;
+  user-select: none;
+  transition: 0.2s;
+}
+.nav-arrow:hover {
+  color: var(--primary);
+  transform: translateX(0.2vw);
+}
+.nav-arrow.disabled {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.image-displayer {
+  position: relative;
+  max-width: 80vw;
+}
+#page-holder {
+  max-width: 100%;
+  display: none;
+}
+
+/* ───── Hot‑spots (audio areas) ───────────────────────────────── */
+.hot {
+  position: absolute;
+  border-bottom: 2px solid #ae2727;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.hot:hover {
+  background-color: #ae27271b;
+}
+/* outline version (factory view) */
+.hide-audios .hot {
+  border-bottom: none !important;
+}
+
+/* ───── “Show audios” checkbox ───────────────────────────────── */
+.show-audios-checkbox {
+  gap: 0.7vw;
+  font: 500 1vw "Roboto", sans-serif;
+}
+.show-audios-checkbox input {
+  width: 1.3vw;
+  height: 1.3vw;
+}
+
+@media (max-width: 1024px) {
+  .header {
+    height: 15vh;
+  }
+  .logo {
+    gap: 3vw;
+  }
+  #logo-image {
+    width: 5vw;
+  }
+  #logo-title {
+    font: 700 2vw "Montserrat", sans-serif;
+  }
+  #logo-slogan {
+    font: 500 1.2vw "Roboto", sans-serif;
+  }
+  .dropdown-btn {
+    width: 20vw;
+    padding: 3vh 0;
+    font: 500 1.7vw "Roboto", sans-serif;
+  }
+  .dropdown-list li {
+    padding: 1.5vh 1vw;
+    font: 1.7vw "Basic", sans-serif;
+  }
+  .show-audios-checkbox {
+    gap: 2vw;
+    font: 500 3vw "Roboto", sans-serif;
+  }
+  .show-audios-checkbox input {
+    width: 2.5vw;
+    height: 2.5vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    height: 20vh;
+  }
+  .show-audios-checkbox {
+    gap: 3vw;
+    font: 500 4vw "Roboto", sans-serif;
+  }
+  .show-audios-checkbox input {
+    width: 3vw;
+    height: 3vw;
+  }
+}
+
+@media (max-width: 575px) {
+  .dropdown-btn {
+    width: 30vw;
+    font: 500 3vw "Roboto", sans-serif;
+  }
+  .dropdown-list li {
+    font: 3vw "Basic", sans-serif;
+  }
+}
+
+@media (max-width: 370px) {
+  .header {
+    height: 15vh;
+  }
+  .show-audios-checkbox {
+    gap: 4;
+    font: 500 5vw "Roboto", sans-serif;
+  }
+  .show-audios-checkbox input {
+    width: 4vw;
+    height: 4vw;
+  }
+}

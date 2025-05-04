@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles/core.css" />
+    <link rel="stylesheet" href="/styles/header.css" />
+    <link rel="stylesheet" href="/styles/sidebar.css" />
+    <link rel="stylesheet" href="/styles/hokm.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&family=Tilt+Warp&display=swap"
+      rel="stylesheet"
+    />
+    <title>Eaalim Audible Muhaf | Factory</title>
+  </head>
+  <body>
+    <div class="body-wrapper centered">
+      <%- include('partials/header.ejs') %>
+      <div class="main-wrapper">
+        <main class="centered">
+          <%- include('partials/sidebar.ejs') %>
+          <div class="displayer">
+            <div class="displayer-wrapper centered">
+              <h4 id="current-location-wrapper">
+                <a id="current-location" href="/factory/<%= hokm.id %>/">
+                  <%= hokm.name %>
+                </a>
+              </h4>
+              <div class="ajzaa-control-panel centered">
+                <button id="rename-hokm-btn" class="editor-btn">
+                  Rename Hokm
+                </button>
+                <button id="add-juza-btn" class="editor-btn">Add A Juz'</button>
+                <button id="delete-hokm-btn" class="editor-btn">
+                  Delete Hokm Permanently
+                </button>
+              </div>
+              <div class="ajzaa-editor centered">
+                <div class="ajzaa-container centered" id="ajzaa-grid">
+                  <% ajzaa.forEach(j => { %>
+                  <div class="juza centered" data-id="<%= j.id %>">
+                    <div class="juza-name centered">
+                      <i class="fa-solid fa-grip-lines dragger"></i>
+                      <h2 class="juza-title">Juz' <%= j.number %></h2>
+                    </div>
+                    <div class="juza-controls">
+                      <button
+                        class="editor-btn rename"
+                        data-id="<%= j.id %>"
+                        data-num="<%= j.number %>"
+                      >
+                        Rename
+                      </button>
+                      <a
+                        href="/factory/<%= hokm.id %>/<%= j.id %>"
+                        class="editor-btn edit"
+                        >Edit</a
+                      >
+                      <button class="editor-btn delete" data-id="<%= j.id %>">
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                  <% }) %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+      integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://kit.fontawesome.com/82432b4eb3.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.19.1/dist/sweetalert2.all.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/modular/sortable.esm.js"
+      type="module"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+    <script type="module">
+      import Sortable from "https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/modular/sortable.esm.js";
+      $(() => {
+        const hokmId = "<%= hokm.id %>";
+        const csrf = "<%= csrfToken %>";
+
+        new Sortable(document.getElementById("ajzaa-grid"), {
+          animation: 150,
+          draggable: ".juza",
+          handle: ".dragger",
+          onEnd: saveOrder,
+        });
+
+        function saveOrder() {
+          const ids = $(".juza")
+            .map((_, el) => $(el).data("id"))
+            .get();
+          $.ajax({
+            url: `/factory/${hokmId}/reorder-juza`,
+            type: "POST",
+            headers: { "csrf-token": csrf },
+            contentType: "application/json",
+            data: JSON.stringify({ ids }),
+          });
+        }
+
+        $("#add-juza-btn").on("click", addJuza);
+        async function addJuza(e) {
+          e.preventDefault();
+          const { value: num } = await Swal.fire({
+            title: "Add Juzʾ",
+            input: "number",
+            inputAttributes: { min: 1, max: 30 },
+            showCancelButton: true,
+          });
+          if (!num) return;
+          $.ajax({
+            url: `/factory/${hokmId}/add-juza`,
+            type: "POST",
+            headers: { "csrf-token": csrf },
+            contentType: "application/json",
+            data: JSON.stringify({ number: num }),
+            success: () => location.reload(),
+            error: (x) =>
+              Swal.fire(
+                "Oops",
+                x.responseJSON?.error || "Server error",
+                "error"
+              ),
+          });
+        }
+
+        $("#ajzaa-grid").on("click", ".rename", async function () {
+          const juzaId = $(this).data("id"),
+            current = $(this).data("num");
+          const { value: num } = await Swal.fire({
+            title: "Rename Juzʾ",
+            input: "number",
+            inputValue: current,
+            inputAttributes: { min: 1, max: 30 },
+            showCancelButton: true,
+          });
+          if (!num) return;
+          $.ajax({
+            url: `/factory/${hokmId}/${juzaId}/rename-juza`,
+            type: "POST",
+            headers: { "csrf-token": csrf },
+            contentType: "application/json",
+            data: JSON.stringify({ number: num }),
+            success: () => location.reload(),
+            error: (x) =>
+              Swal.fire(
+                "Oops",
+                x.responseJSON?.error || "Server error",
+                "error"
+              ),
+          });
+        });
+
+        $("#ajzaa-grid").on("click", ".delete", function () {
+          const juzaId = $(this).data("id");
+          Swal.fire({
+            title: "Delete this Juzʾ?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, delete",
+          }).then((res) => {
+            if (!res.isConfirmed) return;
+            $.ajax({
+              url: `/factory/${hokmId}/${juzaId}`,
+              type: "DELETE",
+              headers: { "csrf-token": csrf },
+              success: () => location.reload(),
+            });
+          });
+        });
+
+        $("#rename-hokm-btn").on("click", async () => {
+          const { value: name } = await Swal.fire({
+            title: "Rename Hokm",
+            input: "text",
+            inputValue: "<%= hokm.name %>",
+            showCancelButton: true,
+          });
+          if (!name) return;
+          $.ajax({
+            url: `/factory/${hokmId}/rename-hokm`,
+            type: "POST",
+            headers: { "csrf-token": csrf },
+            contentType: "application/json",
+            data: JSON.stringify({ name }),
+            success: () => location.reload(),
+            error: (x) =>
+              Swal.fire(
+                "Oops",
+                x.responseJSON?.error || "Server error",
+                "error"
+              ),
+          });
+        });
+
+        $("#delete-hokm-btn").on("click", () => {
+          Swal.fire({
+            title: "Delete entire Hokm?",
+            text: "This cannot be undone!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Delete!",
+          }).then((r) => {
+            if (!r.isConfirmed) return;
+            $.ajax({
+              url: `/factory/${hokmId}`,
+              type: "DELETE",
+              headers: { "csrf-token": csrf },
+              success: () => (location.href = "/factory"),
+            });
+          });
+        });
+
+        $(".right-arrow-btn").hover(
+          () => $(".right-arrow-btn i").addClass("rotated-arrow"),
+          () => $(".right-arrow-btn i").removeClass("rotated-arrow")
+        );
+      });
+    </script>
+  </body>
+</html>

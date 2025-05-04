@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles/core.css" />
+    <link rel="stylesheet" href="/styles/header.css" />
+    <link rel="stylesheet" href="/styles/sidebar.css" />
+    <link rel="stylesheet" href="/styles/factory.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&family=Tilt+Warp&display=swap"
+      rel="stylesheet"
+    />
+    <title>Eaalim Audible Muhaf | Factory</title>
+  </head>
+  <body>
+    <div class="body-wrapper centered">
+      <%- include('partials/header.ejs') %>
+      <div class="main-wrapper">
+        <main class="centered">
+          <%- include('partials/sidebar.ejs') %>
+          <div class="displayer">
+            <div class="displayer-wrapper centered">
+              <div class="ahkam" id="hokm-grid">
+                <% hokm.forEach(h => { %>
+                <div class="hokm centered" data-id="<%= h.id %>">
+                  <i class="fa-solid fa-grip dragger"></i>
+                  <div class="hokm-container centered">
+                    <div class="hokm-thumbnail">
+                      <img
+                        src="/assets/default_hokm_thumbnail.jpg"
+                        alt="Hokm thumbnail"
+                        class="thumbnail"
+                      />
+                    </div>
+
+                    <div class="hokm-titles centered">
+                      <h2 class="hokm-title"><%= h.name %></h2>
+                      <h3 class="hokm-description">
+                        Edit and add pages in this Hokm
+                      </h3>
+                    </div>
+
+                    <a class="edit-btn" href="/factory/<%= h.id %>">Edit</a>
+                  </div>
+                </div>
+                <% }); %>
+
+                <a class="hokm centered" id="add-hokm">
+                  <button>+</button>
+                </a>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+      integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://kit.fontawesome.com/82432b4eb3.js"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        $(".right-arrow-btn").hover(
+          function () {
+            $(".right-arrow-btn i").addClass("rotated-arrow");
+          },
+          function () {
+            $(".right-arrow-btn i").removeClass("rotated-arrow");
+          }
+        );
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.19.1/dist/sweetalert2.all.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/modular/sortable.esm.js"
+      type="module"
+    ></script>
+    <script type="module">
+      const csrfToken = "<%= csrfToken %>";
+
+      document
+        .getElementById("add-hokm")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+
+          const { value: name } = await Swal.fire({
+            title: "Add A New Hokm",
+            input: "text",
+            showCancelButton: true,
+            inputValidator: (v) => !v && "Please enter a name",
+          });
+          if (!name) return;
+
+          const r = await fetch("/factory/add-hokm", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "csrf-token": csrfToken,
+            },
+            body: JSON.stringify({ name }),
+          });
+
+          if (r.ok) {
+            Swal.fire("Saved!", "", "success").then(() => location.reload());
+          } else {
+            const { error } = await r.json();
+            Swal.fire("Oops", error || "Server error", "error");
+          }
+        });
+
+      import Sortable from "https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/modular/sortable.esm.js";
+      const grid = document.getElementById("hokm-grid");
+
+      const sortable = new Sortable(grid, {
+        animation: 150,
+        draggable: ".hokm",
+        handle: ".dragger",
+        filter: "#add-hokm",
+        onEnd: saveOrder,
+      });
+
+      async function saveOrder() {
+        const ids = [...grid.querySelectorAll(".hokm")]
+          .filter((el) => !el.id)
+          .map((el) => el.dataset.id);
+
+        await fetch("/factory/reorder-hokm", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "csrf-token": csrfToken,
+          },
+          body: JSON.stringify({ ids }),
+        });
+      }
+    </script>
+  </body>
+</html>
