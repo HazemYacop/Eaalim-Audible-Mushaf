@@ -170,7 +170,7 @@ app.post(
 );
 
 app.post(
-  "/factory/rename-hokm/:hokmId",
+  "/factory/:hokmId/rename-hokm",
   authRequired,
   asyncH(async (req, res) => {
     const name = (req.body.name || "").trim();
@@ -305,10 +305,16 @@ app.post(
   asyncH(async (req, res) => {
     const url = "/uploads/" + req.file.filename;
     const { rows } = await pool.query(
-      `INSERT INTO juza_page(juza_id,image_url,page_number,position)
-       VALUES($1,$2,COALESCE($3,(SELECT COALESCE(MAX(page_number),0)+1
-                                 FROM juza_page WHERE juza_id=$1)),1000)
-       RETURNING id,page_number,image_url`,
+      `INSERT INTO juza_page (juza_id,image_url,page_number,position)
+       VALUES ($1,$2,
+         COALESCE($3,
+           (SELECT COALESCE(MAX(page_number),0)+1
+              FROM juza_page WHERE juza_id=$1)
+         ),
+         (SELECT COALESCE(MAX(position),0)+1
+            FROM juza_page WHERE juza_id=$1)
+       )
+       RETURNING id,page_number,image_url,position`,
       [req.params.juzaId, url, req.body.page_number]
     );
     res.status(201).json(rows[0]);

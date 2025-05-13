@@ -87,6 +87,15 @@
                 contentType: false,
                 data: fd,
                 success: (p) => {
+                  if (currentPageId) {
+                    $.ajax({
+                      url: `/factory/page/${currentPageId}/hotspots`,
+                      type: "PATCH",
+                      headers: { "csrf-token": csrf },
+                      contentType: "application/json",
+                      data: JSON.stringify({ hotspots: currentRects }),
+                    });
+                  }
                   const n = $(".thumbnail").length + 1;
                   $strip.append(`
     <div class="thumbnail" data-id="${p.id}">
