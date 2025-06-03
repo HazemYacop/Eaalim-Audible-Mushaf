@@ -17,7 +17,7 @@ import { pool } from "./db.js";
 import { verifyUser } from "./auth.js";
 
 // helpers
-const ROOT_PATH = dirname(fileURLToPath(import.meta.url));
+const ROOT_PATH = process.cwd();
 const app = express();
 const asyncH = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
