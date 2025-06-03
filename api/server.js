@@ -11,8 +11,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // local modules ---------------------------------------------------------------
-import { pool } from "./db.js";
-import { verifyUser } from "./auth.js";
+import { pool } from "../db.js";
+import { verifyUser } from "../auth.js";
 
 // -----------------------------------------------------------------------------
 // helpers
