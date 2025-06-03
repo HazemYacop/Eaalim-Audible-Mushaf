@@ -1,24 +1,23 @@
-// core & security -------------------------------------------------------------
+// core & security
 import express from "express";
 import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import session from "express-session";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import AWS from "aws-sdk";
 import csrf from "csurf";
 import multer from "multer";
+import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 dotenv.config();
 
-// local modules ---------------------------------------------------------------
+// local modules
 import { pool } from "./db.js";
 import { verifyUser } from "./auth.js";
 
-// -----------------------------------------------------------------------------
 // helpers
-// -----------------------------------------------------------------------------
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const upload = multer({ dest: "public/uploads/" });
 const app = express();
 const asyncH = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
@@ -35,18 +34,25 @@ const updatePositions = async (client, table, idArr, extraWhere = "") => {
 const renderWithCsrf = (res, view, data = {}) =>
   res.render(view, { ...data, csrfToken: res.req.csrfToken() });
 
-// -----------------------------------------------------------------------------
-// global middleware
-// -----------------------------------------------------------------------------
+// Cloudflare R2 config
+const s3 = new AWS.S3({
+  endpoint: "https://ee4331c19e2c5c46e14e8daea632cf68.r2.cloudflarestorage.com",
+  accessKeyId: process.env.R2_ACCESS_KEY_ID,
+  secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  region: "auto",
+  signatureVersion: "v4",
+});
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+// middleware
 app.set("views", "./views");
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(rateLimit({ windowMs: 15 * 60 * 1e3, max: 500 }));
-
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 500 }));
 app.set("trust proxy", 1);
 app.use(
   session({
@@ -56,22 +62,22 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: "lax",
-      secure: true,
+      secure: true, // process.env.NODE_ENV === "production"
     },
   })
 );
 app.use(csrf());
 
-// -----------------------------------------------------------------------------
 // auth helper
-// -----------------------------------------------------------------------------
 const authRequired = (req, res, next) =>
   req.session.user ? next() : res.redirect("/factory/login");
+
+// routes
+app.get("/", (_, res) => renderWithCsrf(res, "home"));
 
 // -----------------------------------------------------------------------------
 // public endpoints
 // -----------------------------------------------------------------------------
-app.get("/", (_, res) => renderWithCsrf(res, "home"));
 app.get(
   "/api/hokm",
   asyncH(async (_, res) =>
@@ -143,6 +149,48 @@ app.get(
 
 // CSRF token for client‑side requests
 app.get("/csrf-token", (req, res) => res.json({ csrfToken: req.csrfToken() }));
+
+// audio & image upload to R2
+const uploadToR2 = async (file, folder = "") => {
+  const key = `${folder}${uuidv4()}_${file.originalname}`;
+  await s3
+    .putObject({
+      Bucket: process.env.R2_BUCKET,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    })
+    .promise();
+  return `https://pub-41075be619d1468aaff5ef8e1e715ae4.r2.dev/${key}`;
+};
+
+app.post(
+  "/factory/upload-audio",
+  authRequired,
+  upload.single("file"),
+  asyncH(async (req, res) => {
+    const url = await uploadToR2(req.file, "audios/");
+    res.json({ url });
+  })
+);
+
+app.post(
+  "/factory/:juzaId/add-page",
+  authRequired,
+  upload.single("file"),
+  asyncH(async (req, res) => {
+    const imageUrl = await uploadToR2(req.file, "images/");
+    const { rows } = await pool.query(
+      `INSERT INTO juza_page (juza_id,image_url,page_number,position)
+     VALUES ($1,$2,
+       COALESCE($3,(SELECT COALESCE(MAX(page_number),0)+1 FROM juza_page WHERE juza_id=$1)),
+       (SELECT COALESCE(MAX(position),0)+1 FROM juza_page WHERE juza_id=$1))
+     RETURNING id,page_number,image_url,position`,
+      [req.params.juzaId, imageUrl, req.body.page_number]
+    );
+    res.status(201).json(rows[0]);
+  })
+);
 
 // ---------- hokm -------------------------------------------------------------
 app.post(
@@ -298,28 +346,6 @@ app.delete(
 );
 
 // ---------- juza pages --------------------------------------------------------
-app.post(
-  "/factory/:juzaId/add-page",
-  authRequired,
-  upload.single("file"),
-  asyncH(async (req, res) => {
-    const url = "/uploads/" + req.file.filename;
-    const { rows } = await pool.query(
-      `INSERT INTO juza_page (juza_id,image_url,page_number,position)
-       VALUES ($1,$2,
-         COALESCE($3,
-           (SELECT COALESCE(MAX(page_number),0)+1
-              FROM juza_page WHERE juza_id=$1)
-         ),
-         (SELECT COALESCE(MAX(position),0)+1
-            FROM juza_page WHERE juza_id=$1)
-       )
-       RETURNING id,page_number,image_url,position`,
-      [req.params.juzaId, url, req.body.page_number]
-    );
-    res.status(201).json(rows[0]);
-  })
-);
 
 app.get(
   "/factory/:juzaId/pages",
@@ -443,19 +469,7 @@ app.get("/view/:hokmId/:juzaId", (req, res) => {
   res.render("home");
 });
 
-// -----------------------------------------------------------------------------
-// uploads (audio)
-// -----------------------------------------------------------------------------
-app.post(
-  "/factory/upload-audio",
-  authRequired,
-  upload.single("file"),
-  (req, res) => res.json({ url: "/uploads/" + req.file.filename })
-);
-
-// -----------------------------------------------------------------------------
 // server
-// -----------------------------------------------------------------------------
 app.listen(process.env.PORT, () =>
   console.log(`Server running → http://localhost:${process.env.PORT}`)
 );
