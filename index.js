@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 dotenv.config();
 
-// local modules.
+// local modules
 import { pool } from "./db.js";
 import { verifyUser } from "./auth.js";
 
