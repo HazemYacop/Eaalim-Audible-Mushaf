@@ -46,7 +46,7 @@ const s3 = new AWS.S3({
 const upload = multer({ storage: multer.memoryStorage() });
 
 // middleware
-app.set("views", "./views");
+app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
