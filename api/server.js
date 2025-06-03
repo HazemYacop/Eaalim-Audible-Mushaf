@@ -18,7 +18,7 @@ import { verifyUser } from "../auth.js";
 // helpers
 // -----------------------------------------------------------------------------
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const upload = multer({ dest: "public/uploads/" });
+const upload = multer({ dest: "../public/uploads/" });
 const app = express();
 const asyncH = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
@@ -38,9 +38,9 @@ const renderWithCsrf = (res, view, data = {}) =>
 // -----------------------------------------------------------------------------
 // global middleware
 // -----------------------------------------------------------------------------
-app.set("views", "./views");
+app.set("views", "../views");
 app.set("view engine", "ejs");
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "../public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
