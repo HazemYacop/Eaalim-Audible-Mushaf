@@ -18,6 +18,7 @@ import { verifyUser } from "./auth.js";
 
 // helpers
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT_PATH = process.cwd();
 const app = express();
 const asyncH = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
@@ -46,9 +47,9 @@ const s3 = new AWS.S3({
 const upload = multer({ storage: multer.memoryStorage() });
 
 // middleware
-app.set("views", path.join(__dirname, "views"));
+app.set("views", path.join(ROOT_PATH, "views"));
 app.set("view engine", "ejs");
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(ROOT_PATH, "public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(helmet({ contentSecurityPolicy: false }));
