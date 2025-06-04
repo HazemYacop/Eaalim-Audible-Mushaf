@@ -22,11 +22,17 @@ const app = express();
 const asyncH = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
 
-const updatePositions = async (client, table, idArr, extraWhere = "") => {
+const updatePositions = async (
+  client,
+  table,
+  idArr,
+  extraWhere = "",
+  ...extraParams
+) => {
   for (let i = 0; i < idArr.length; i++) {
     await client.query(
       `UPDATE ${table} SET position=$2 WHERE id=$1 ${extraWhere}`,
-      [idArr[i], i + 1]
+      [idArr[i], i + 1, ...extraParams]
     );
   }
 };
@@ -334,17 +340,6 @@ app.post(
   })
 );
 
-app.delete(
-  "/factory/:hokmId/:juzaId",
-  authRequired,
-  asyncH(async (req, res) => {
-    await pool.query("DELETE FROM ajzaa WHERE id=$1 AND hokm_id=$2", [
-      req.params.juzaId,
-      req.params.hokmId,
-    ]);
-    res.sendStatus(204);
-  })
-);
 
 // ---------- juza pages --------------------------------------------------------
 
@@ -416,6 +411,18 @@ app.delete(
   authRequired,
   asyncH(async (req, res) => {
     await pool.query("DELETE FROM juza_page WHERE id=$1", [req.params.pageId]);
+    res.sendStatus(204);
+  })
+);
+
+app.delete(
+  "/factory/:hokmId/:juzaId",
+  authRequired,
+  asyncH(async (req, res) => {
+    await pool.query("DELETE FROM ajzaa WHERE id=$1 AND hokm_id=$2", [
+      req.params.juzaId,
+      req.params.hokmId,
+    ]);
     res.sendStatus(204);
   })
 );
