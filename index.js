@@ -1,7 +1,7 @@
 // core & security
 import express from "express";
 import path, { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import PGSessionStore from "./pgSessionStore.js";
 import session from "express-session";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -56,6 +56,7 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 500 }));
 app.set("trust proxy", 1);
 app.use(
   session({
+    store: new PGSessionStore(),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
