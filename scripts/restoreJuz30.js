@@ -43,6 +43,14 @@ function getContentType(name) {
   return 'application/octet-stream';
 }
 
+function getKeyFromUrl(url) {
+  try {
+    return new URL(url, 'https://dummy').pathname.slice(1);
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   const hokmFolders = await fs.readdir(ROOT_DIR);
 
@@ -67,27 +75,52 @@ async function main() {
     }
     const juzaId = jrows[0].id;
 
-    const pages = await fs.readdir(hokmPath);
-    for (const pFolder of pages) {
-      const pagePath = path.join(hokmPath, pFolder);
-      if (!(await fs.stat(pagePath)).isDirectory()) continue;
-      const pageNum = parseInt(pFolder, 10);
-      if (!Number.isInteger(pageNum) || pageNum < 1) continue;
+    const { rows: pageRows } = await pool.query(
+      'SELECT id, page_number, image_url, hotspots FROM juza_page WHERE juza_id=$1 ORDER BY page_number',
+      [juzaId]
+    );
+    if (!pageRows.length) {
+      console.warn(`No pages found in DB for ${hokmName}`);
+      continue;
+    }
+    const pageMap = new Map(pageRows.map((p) => [p.page_number, p]));
+    const dbFirst = pageRows[0].page_number;
+    const dbLast = pageRows[pageRows.length - 1].page_number;
 
-      const { rows: prows } = await pool.query(
-        'SELECT id, image_url, hotspots FROM juza_page WHERE juza_id=$1 AND page_number=$2',
-        [juzaId, pageNum]
-      );
-      if (!prows.length) {
+    const entries = await fs.readdir(hokmPath, { withFileTypes: true });
+    const pageFolders = entries.filter((e) => e.isDirectory()).map((e) => e.name);
+    const numericFolders = pageFolders
+      .map((n) => parseInt(n, 10))
+      .filter((n) => Number.isInteger(n));
+    numericFolders.sort((a, b) => a - b);
+    const folderFirst = numericFolders[0];
+    const folderLast = numericFolders[numericFolders.length - 1];
+    const offsetFirst = dbFirst - folderFirst;
+    const offsetLast = dbLast - folderLast;
+
+    for (const pFolder of pageFolders) {
+      const pagePath = path.join(hokmPath, pFolder);
+      const pageNum = parseInt(pFolder, 10);
+      if (!Number.isInteger(pageNum)) continue;
+
+      let page =
+        pageMap.get(pageNum) ||
+        pageMap.get(pageNum + offsetFirst) ||
+        pageMap.get(pageNum + offsetLast);
+      if (!page) {
         console.warn(`Page ${pageNum} not found in DB for ${hokmName}`);
         continue;
       }
-      const page = prows[0];
+
       const dirFiles = await fs.readdir(pagePath);
-      const imageFile = dirFiles.find(f => !/\.(mp3|ogg|wav)$/i.test(f));
+      const imageFile = dirFiles.find((f) => !/\.(mp3|ogg|wav)$/i.test(f));
       if (imageFile) {
-        const key = new URL(page.image_url).pathname.slice(1);
-        await uploadFile(key, path.join(pagePath, imageFile), getContentType(imageFile));
+        const key = getKeyFromUrl(page.image_url);
+        if (key) {
+          await uploadFile(key, path.join(pagePath, imageFile), getContentType(imageFile));
+        } else {
+          console.warn(`Invalid image URL for page ${pageNum} in ${hokmName}`);
+        }
       }
 
       let hotspots = [];
@@ -97,9 +130,13 @@ async function main() {
 
       for (const h of hotspots) {
         if (!h.audio) continue;
-        const key = new URL(h.audio).pathname.slice(1);
+        const key = getKeyFromUrl(h.audio);
+        if (!key) {
+          console.warn(`Invalid audio URL in DB for page ${pageNum} in ${hokmName}`);
+          continue;
+        }
         const base = decodeURIComponent(key.split('_').slice(1).join('_'));
-        const audioFile = dirFiles.find(f => f === base);
+        const audioFile = dirFiles.find((f) => f === base);
         if (!audioFile) {
           console.warn(`Audio ${base} not found for page ${pageNum} in ${hokmName}`);
           continue;

@@ -29,9 +29,12 @@ If page images or audio clips are removed from Cloudflare R2 but their
 URLs are still present in the database you can restore them using the
 `scripts/restoreJuz30.js` helper. This script expects the local folder
 structure to be `<hokm>/<page number>/<files>` and uploads the files to
-the paths stored in the database for Juz 30. Folder names for page
-numbers should start at **1** to match the `juza_page.page_number`
-column.
+the exact paths stored in the database for Juz&nbsp;30. The R2 bucket uses
+two top‑level folders, **images** and **audios**, and the restore helper
+places each file back in its recorded location. Page folders can either
+use the same page numbers stored in the database or start from **1**
+(useful when they contain only the pages of Juz&nbsp;30). The script
+detects any numbering offset automatically.
 
 Usage:
 
