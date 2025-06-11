@@ -51,6 +51,30 @@ function getKeyFromUrl(url) {
   }
 }
 
+function adjustKey(oldKey, type) {
+  if (!oldKey) return null;
+  const name = path.posix.basename(oldKey);
+  const folder = type === 'image' ? 'images' : 'audios';
+  return `${folder}/${name}`;
+}
+
+function replaceUrlKey(url, newKey) {
+  try {
+    const u = new URL(url, 'https://dummy');
+    if (u.hostname === 'dummy') return newKey;
+    u.pathname = `/${newKey}`;
+    return u.toString();
+  } catch {
+    return newKey;
+  }
+}
+
+function baseFromKey(key) {
+  const name = decodeURIComponent(path.posix.basename(key));
+  const parts = name.split('_');
+  return parts.length > 1 ? parts.slice(1).join('_') : name;
+}
+
 async function main() {
   const hokmFolders = await fs.readdir(ROOT_DIR);
 
@@ -115,11 +139,17 @@ async function main() {
       const dirFiles = await fs.readdir(pagePath);
       const imageFile = dirFiles.find((f) => !/\.(mp3|ogg|wav)$/i.test(f));
       if (imageFile) {
-        const key = getKeyFromUrl(page.image_url);
-        if (key) {
-          await uploadFile(key, path.join(pagePath, imageFile), getContentType(imageFile));
-        } else {
+        const oldKey = getKeyFromUrl(page.image_url);
+        if (!oldKey) {
           console.warn(`Invalid image URL for page ${pageNum} in ${hokmName}`);
+        } else {
+          const newKey = adjustKey(oldKey, 'image');
+          await uploadFile(newKey, path.join(pagePath, imageFile), getContentType(imageFile));
+          const newUrl = replaceUrlKey(page.image_url, newKey);
+          if (newUrl !== page.image_url) {
+            await pool.query('UPDATE juza_page SET image_url=$1 WHERE id=$2', [newUrl, page.id]);
+            page.image_url = newUrl;
+          }
         }
       }
 
@@ -128,20 +158,30 @@ async function main() {
         hotspots = Array.isArray(page.hotspots) ? page.hotspots : JSON.parse(page.hotspots || '[]');
       } catch {}
 
+      let hotspotsChanged = false;
       for (const h of hotspots) {
         if (!h.audio) continue;
-        const key = getKeyFromUrl(h.audio);
-        if (!key) {
+        const oldKey = getKeyFromUrl(h.audio);
+        if (!oldKey) {
           console.warn(`Invalid audio URL in DB for page ${pageNum} in ${hokmName}`);
           continue;
         }
-        const base = decodeURIComponent(key.split('_').slice(1).join('_'));
+        const base = baseFromKey(oldKey);
         const audioFile = dirFiles.find((f) => f === base);
         if (!audioFile) {
           console.warn(`Audio ${base} not found for page ${pageNum} in ${hokmName}`);
           continue;
         }
-        await uploadFile(key, path.join(pagePath, audioFile), getContentType(audioFile));
+        const newKey = adjustKey(oldKey, 'audio');
+        await uploadFile(newKey, path.join(pagePath, audioFile), getContentType(audioFile));
+        const newUrl = replaceUrlKey(h.audio, newKey);
+        if (newUrl !== h.audio) {
+          h.audio = newUrl;
+          hotspotsChanged = true;
+        }
+      }
+      if (hotspotsChanged) {
+        await pool.query('UPDATE juza_page SET hotspots=$1::jsonb WHERE id=$2', [JSON.stringify(hotspots), page.id]);
       }
     }
   }

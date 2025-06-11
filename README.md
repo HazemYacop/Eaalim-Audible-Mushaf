@@ -34,7 +34,9 @@ two top‑level folders, **images** and **audios**, and the restore helper
 places each file back in its recorded location. Page folders can either
 use the same page numbers stored in the database or start from **1**
 (useful when they contain only the pages of Juz&nbsp;30). The script
-detects any numbering offset automatically.
+detects any numbering offset automatically. If the stored URLs begin with
+`uploads/`, the helper rewrites them to the appropriate folder and
+updates the database with the new URLs.
 
 Usage:
 
