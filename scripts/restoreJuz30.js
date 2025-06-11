@@ -72,7 +72,7 @@ async function main() {
       const pagePath = path.join(hokmPath, pFolder);
       if (!(await fs.stat(pagePath)).isDirectory()) continue;
       const pageNum = parseInt(pFolder, 10);
-      if (!pageNum) continue;
+      if (!Number.isInteger(pageNum) || pageNum < 1) continue;
 
       const { rows: prows } = await pool.query(
         'SELECT id, image_url, hotspots FROM juza_page WHERE juza_id=$1 AND page_number=$2',
