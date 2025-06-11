@@ -50,8 +50,8 @@
   display: inline-block;
 }
 .dropdown-btn {
-  width: 15vw;
-  padding: 2vh 0;
+  min-width: 12vw;
+  padding: 2vh 3vw;
   gap: 2vw;
   background: var(--primary);
   color: var(--white);
