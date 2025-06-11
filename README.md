@@ -22,3 +22,21 @@ PORT=3000 node index.js
 When running locally or on another platform, the app listens on `PORT` as
 usual. On Vercel the function handler is used instead, so the server is
 serverless.
+
+## Restoring deleted files
+
+If page images or audio clips are removed from Cloudflare R2 but their
+URLs are still present in the database you can restore them using the
+`scripts/restoreJuz30.js` helper. This script expects the local folder
+structure to be `<hokm>/<page number>/<files>` and uploads the files to
+the paths stored in the database for Juz 30.
+
+Usage:
+
+```bash
+node scripts/restoreJuz30.js /path/to/local/folder
+```
+
+The script relies on the same environment variables used by the
+application (`DB_URL`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, and
+`R2_SECRET_ACCESS_KEY`).
