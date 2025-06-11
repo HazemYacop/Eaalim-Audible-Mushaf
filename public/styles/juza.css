@@ -18,19 +18,19 @@
 }
 
 #page-strip {
-  display: flex;
-  gap: 1vw;
-  overflow-x: auto;
-  max-width: 70vw;
-  padding-bottom: 0.25rem;
-  padding-left: 3vw;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2vw;
+  border: .1vw solid #000;
+  overflow-y: auto;
+  height: 10vw;
+  padding: 2vh 2vw;
 }
 
 .thumbnail {
   flex: 0;
   position: relative;
   cursor: pointer;
-  width: 8vw;
 }
 
 .thumbnail img {
@@ -126,10 +126,6 @@
 .displayer-wrapper {
   width: 90%;
   gap: 5vh;
-}
-
-#page-strip {
-  width: 90%;
 }
 
 .juza-editor {
