@@ -171,6 +171,17 @@ const uploadToR2 = async (file, folder = "") => {
   return `https://pub-41075be619d1468aaff5ef8e1e715ae4.r2.dev/${key}`;
 };
 
+const deleteFromR2 = async (urls = []) => {
+  if (!Array.isArray(urls) || !urls.length) return;
+  const Objects = urls
+    .filter(Boolean)
+    .map((u) => ({ Key: new URL(u).pathname.slice(1) }));
+  if (!Objects.length) return;
+  await s3
+    .deleteObjects({ Bucket: process.env.R2_BUCKET, Delete: { Objects } })
+    .promise();
+};
+
 app.post(
   "/factory/upload-audio",
   authRequired,
@@ -266,7 +277,23 @@ app.delete(
   "/factory/:hokmId",
   authRequired,
   asyncH(async (req, res) => {
-    await pool.query("DELETE FROM hokm WHERE id=$1", [req.params.hokmId]);
+    const hokmId = req.params.hokmId;
+    const { rows: pages } = await pool.query(
+      `SELECT image_url,hotspots FROM juza_page WHERE juza_id IN (
+         SELECT id FROM ajzaa WHERE hokm_id=$1)`,
+      [hokmId]
+    );
+    const files = [];
+    for (const p of pages) {
+      files.push(p.image_url);
+      try {
+        (Array.isArray(p.hotspots) ? p.hotspots : JSON.parse(p.hotspots || "[]")).forEach(
+          (h) => h.audio && files.push(h.audio)
+        );
+      } catch {}
+    }
+    await deleteFromR2(files);
+    await pool.query("DELETE FROM hokm WHERE id=$1", [hokmId]);
     res.sendStatus(204);
   })
 );
@@ -410,6 +437,19 @@ app.delete(
   "/factory/page/:pageId",
   authRequired,
   asyncH(async (req, res) => {
+    const { rows } = await pool.query(
+      "SELECT image_url,hotspots FROM juza_page WHERE id=$1",
+      [req.params.pageId]
+    );
+    if (!rows.length) return res.sendStatus(404);
+    const { image_url, hotspots } = rows[0];
+    const audios = [];
+    try {
+      (Array.isArray(hotspots) ? hotspots : JSON.parse(hotspots || "[]")).forEach(
+        (h) => h.audio && audios.push(h.audio)
+      );
+    } catch {}
+    await deleteFromR2([image_url, ...audios]);
     await pool.query("DELETE FROM juza_page WHERE id=$1", [req.params.pageId]);
     res.sendStatus(204);
   })
@@ -419,8 +459,23 @@ app.delete(
   "/factory/:hokmId/:juzaId",
   authRequired,
   asyncH(async (req, res) => {
+    const juzaId = req.params.juzaId;
+    const { rows: pages } = await pool.query(
+      "SELECT image_url,hotspots FROM juza_page WHERE juza_id=$1",
+      [juzaId]
+    );
+    const files = [];
+    for (const p of pages) {
+      files.push(p.image_url);
+      try {
+        (Array.isArray(p.hotspots) ? p.hotspots : JSON.parse(p.hotspots || "[]")).forEach(
+          (h) => h.audio && files.push(h.audio)
+        );
+      } catch {}
+    }
+    await deleteFromR2(files);
     await pool.query("DELETE FROM ajzaa WHERE id=$1 AND hokm_id=$2", [
-      req.params.juzaId,
+      juzaId,
       req.params.hokmId,
     ]);
     res.sendStatus(204);
