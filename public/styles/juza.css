@@ -74,6 +74,11 @@
   background: rgba(174, 39, 39, 0.15);
   cursor: move;
 }
+/* ensure jQuery UI doesn't override absolute positioning */
+.rect.ui-resizable {
+  position: absolute !important;
+}
+
 .rect .ui-resizable-handle {
   background: #ae2727;
   border: 1px solid #ae2727;
