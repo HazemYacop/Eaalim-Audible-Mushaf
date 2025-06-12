@@ -215,7 +215,7 @@
         }
         function addRectDom(r, idx) {
           const $d = $(
-            `<div class="rect"><span class="x">✕</span></div>`
+            `<div class="rect"><span class="x">✕</span><span class="dup">⧉</span></div>`
           ).appendTo($viewer);
           positionRect($d, r);
           $d.draggable({
@@ -225,7 +225,7 @@
             },
           });
           $d.resizable({
-            handles: "n,e,s,w,se,sw,ne,nw",
+            handles: "nw",
             containment: "parent",
             stop() {
               updateCoords($d, idx);
@@ -234,6 +234,13 @@
           $d.on("click", ".x", function (e) {
             e.stopPropagation();
             currentRects.splice(idx, 1);
+            pageRects[currentPageId] = currentRects;
+            renderRects();
+          });
+          $d.on("click", ".dup", function (e) {
+            e.stopPropagation();
+            const copy = { ...r };
+            currentRects.push(copy);
             pageRects[currentPageId] = currentRects;
             renderRects();
           });
