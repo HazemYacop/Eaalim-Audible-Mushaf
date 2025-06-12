@@ -25,6 +25,8 @@ const s3 = new AWS.S3({
   signatureVersion: 'v4',
 });
 
+const PUBLIC_BASE = 'https://pub-41075be619d1468aaff5ef8e1e715ae4.r2.dev/';
+
 async function uploadFile(key, filePath, contentType) {
   const Body = await fs.readFile(filePath);
   await s3
@@ -60,12 +62,11 @@ function adjustKey(oldKey, type) {
 
 function replaceUrlKey(url, newKey) {
   try {
-    const u = new URL(url, 'https://dummy');
-    if (u.hostname === 'dummy') return newKey;
+    const u = new URL(url, PUBLIC_BASE);
     u.pathname = `/${newKey}`;
     return u.toString();
   } catch {
-    return newKey;
+    return `${PUBLIC_BASE}${newKey}`;
   }
 }
 
@@ -137,6 +138,7 @@ async function main() {
       }
 
       const dirFiles = await fs.readdir(pagePath);
+      const audioFiles = dirFiles.filter((f) => /\.(mp3|ogg|wav)$/i.test(f));
       const imageFile = dirFiles.find((f) => !/\.(mp3|ogg|wav)$/i.test(f));
       if (imageFile) {
         const oldKey = getKeyFromUrl(page.image_url);
@@ -159,6 +161,8 @@ async function main() {
       } catch {}
 
       let hotspotsChanged = false;
+      const used = new Set();
+      let cursor = 0;
       for (const h of hotspots) {
         if (!h.audio) continue;
         const oldKey = getKeyFromUrl(h.audio);
@@ -167,11 +171,18 @@ async function main() {
           continue;
         }
         const base = baseFromKey(oldKey);
-        const audioFile = dirFiles.find((f) => f === base);
+        let audioFile = audioFiles.find((f) => f === base && !used.has(f));
+        if (!audioFile) {
+          while (cursor < audioFiles.length && used.has(audioFiles[cursor])) cursor++;
+          if (cursor < audioFiles.length) {
+            audioFile = audioFiles[cursor++];
+          }
+        }
         if (!audioFile) {
           console.warn(`Audio ${base} not found for page ${pageNum} in ${hokmName}`);
           continue;
         }
+        used.add(audioFile);
         const newKey = adjustKey(oldKey, 'audio');
         await uploadFile(newKey, path.join(pagePath, audioFile), getContentType(audioFile));
         const newUrl = replaceUrlKey(h.audio, newKey);
