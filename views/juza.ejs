@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/styles/header.css" />
     <link rel="stylesheet" href="/styles/sidebar.css" />
     <link rel="stylesheet" href="/styles/juza.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css" />
     <title>Juza editor</title>
   </head>
   <body>
@@ -223,6 +224,13 @@
               updateCoords($d, idx);
             },
           });
+          $d.resizable({
+            handles: "n,e,s,w,se,sw,ne,nw",
+            containment: "parent",
+            stop() {
+              updateCoords($d, idx);
+            },
+          });
           $d.on("click", ".x", function (e) {
             e.stopPropagation();
             currentRects.splice(idx, 1);
@@ -245,6 +253,8 @@
             ...currentRects[idx],
             x: $d.position().left / vw,
             y: $d.position().top / vh,
+            w: $d.width() / vw,
+            h: $d.height() / vh,
           };
           pageRects[currentPageId] = currentRects;
         }
