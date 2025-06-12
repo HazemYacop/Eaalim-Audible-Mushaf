@@ -78,6 +78,7 @@
 .rect.ui-resizable {
   position: absolute !important;
 }
+
 .rect .ui-resizable-handle {
   background: #ae2727;
   border: 1px solid #ae2727;
