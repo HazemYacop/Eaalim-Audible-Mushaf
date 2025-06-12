@@ -74,6 +74,25 @@
   background: rgba(174, 39, 39, 0.15);
   cursor: move;
 }
+/* ensure jQuery UI doesn't override absolute positioning */
+.rect.ui-resizable {
+  position: absolute !important;
+}
+.rect .ui-resizable-handle {
+  background: #ae2727;
+  border: 1px solid #ae2727;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.rect .ui-resizable-n { cursor: n-resize; top: -5px; left: 50%; margin-left: -4px; }
+.rect .ui-resizable-s { cursor: s-resize; bottom: -5px; left: 50%; margin-left: -4px; }
+.rect .ui-resizable-e { cursor: e-resize; right: -5px; top: 50%; margin-top: -4px; }
+.rect .ui-resizable-w { cursor: w-resize; left: -5px; top: 50%; margin-top: -4px; }
+.rect .ui-resizable-se { cursor: se-resize; right: -5px; bottom: -5px; }
+.rect .ui-resizable-sw { cursor: sw-resize; left: -5px; bottom: -5px; }
+.rect .ui-resizable-ne { cursor: ne-resize; right: -5px; top: -5px; }
+.rect .ui-resizable-nw { cursor: nw-resize; left: -5px; top: -5px; }
 
 .rect .x {
   position: absolute;
