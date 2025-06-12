@@ -28,10 +28,19 @@ const s3 = new AWS.S3({
 const PUBLIC_BASE = 'https://pub-41075be619d1468aaff5ef8e1e715ae4.r2.dev/';
 
 async function uploadFile(key, filePath, contentType) {
+  try {
+    await s3
+      .headObject({ Bucket: process.env.R2_BUCKET, Key: key })
+      .promise();
+    return false;
+  } catch (err) {
+    if (err.code !== 'NotFound') throw err;
+  }
   const Body = await fs.readFile(filePath);
   await s3
     .putObject({ Bucket: process.env.R2_BUCKET, Key: key, Body, ContentType: contentType })
     .promise();
+  return true;
 }
 
 function getContentType(name) {

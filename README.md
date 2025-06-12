@@ -38,7 +38,8 @@ detects any numbering offset automatically. If the stored URLs begin with
 `uploads/`, the helper rewrites them to the appropriate folder and
 updates the database with fully qualified URLs using the public R2 base.
 Audio files are matched by name when possible but will be used in order if
-no matching file is found.
+no matching file is found. Existing objects are checked before upload so
+running the script multiple times doesn’t reupload unchanged files.
 
 Usage:
 
