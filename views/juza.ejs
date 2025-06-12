@@ -114,6 +114,7 @@
 
         /* ---------- persistent audio -------------------------------- */
         let selectedAudio = "";
+        const audio = new Audio();
 
         /* ---------- page strip -------------------------------------- */
         const $strip = $("#page-strip");
@@ -215,7 +216,9 @@
         }
         function addRectDom(r, idx) {
           const $d = $(
-            `<div class="rect"><span class="x">✕</span><span class="dup">⧉</span></div>`
+            '<div class="rect"><span class="x">✕</span><span class="dup">⎘</span>' +
+              (r.audio ? '<span class="play">🔊</span>' : '') +
+            '</div>'
           ).appendTo($viewer);
           positionRect($d, r);
           $d.draggable({
@@ -239,10 +242,17 @@
           });
           $d.on("click", ".dup", function (e) {
             e.stopPropagation();
-            const copy = { ...r };
+            const copy = { ...currentRects[idx] };
             currentRects.push(copy);
             pageRects[currentPageId] = currentRects;
             renderRects();
+          });
+          $d.on("click", ".play", function (e) {
+            e.stopPropagation();
+            if (r.audio) {
+              audio.src = r.audio;
+              audio.play();
+            }
           });
         }
         function positionRect($d, r) {
