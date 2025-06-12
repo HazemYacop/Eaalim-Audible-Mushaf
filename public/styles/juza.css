@@ -85,6 +85,9 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
 }
 .rect .ui-resizable-n { cursor: n-resize; top: -5px; left: 50%; margin-left: -4px; }
 .rect .ui-resizable-s { cursor: s-resize; bottom: -5px; left: 50%; margin-left: -4px; }
@@ -105,6 +108,9 @@
   padding: 0 4px;
   font-size: 0.7rem;
   cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
 }
 .rect .dup {
   position: absolute;
@@ -116,6 +122,9 @@
   padding: 0 4px;
   font-size: 0.7rem;
   cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
 }
 .rect .play {
   position: absolute;
@@ -127,6 +136,17 @@
   padding: 0 4px;
   font-size: 0.7rem;
   cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.rect:hover .ui-resizable-handle,
+.rect:hover .x,
+.rect:hover .dup,
+.rect:hover .play {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 #ghost {
