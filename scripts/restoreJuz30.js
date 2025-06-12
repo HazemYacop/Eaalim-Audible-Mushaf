@@ -36,7 +36,6 @@ async function uploadFile(key, filePath, contentType) {
   } catch (err) {
     if (err.code !== 'NotFound') throw err;
   }
-
   const Body = await fs.readFile(filePath);
   await s3
     .putObject({ Bucket: process.env.R2_BUCKET, Key: key, Body, ContentType: contentType })

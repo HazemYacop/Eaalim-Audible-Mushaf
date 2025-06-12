@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/styles/header.css" />
     <link rel="stylesheet" href="/styles/sidebar.css" />
     <link rel="stylesheet" href="/styles/juza.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css" />
     <title>Juza editor</title>
   </head>
   <body>
@@ -113,6 +114,7 @@
 
         /* ---------- persistent audio -------------------------------- */
         let selectedAudio = "";
+        const audio = new Audio();
 
         /* ---------- page strip -------------------------------------- */
         const $strip = $("#page-strip");
@@ -214,10 +216,19 @@
         }
         function addRectDom(r, idx) {
           const $d = $(
-            `<div class="rect"><span class="x">✕</span></div>`
+            '<div class="rect"><span class="x">✕</span><span class="dup">⎘</span>' +
+              (r.audio ? '<span class="play">🔊</span>' : '') +
+            '</div>'
           ).appendTo($viewer);
           positionRect($d, r);
           $d.draggable({
+            containment: "parent",
+            stop() {
+              updateCoords($d, idx);
+            },
+          });
+          $d.resizable({
+            handles: "nw",
             containment: "parent",
             stop() {
               updateCoords($d, idx);
@@ -228,6 +239,20 @@
             currentRects.splice(idx, 1);
             pageRects[currentPageId] = currentRects;
             renderRects();
+          });
+          $d.on("click", ".dup", function (e) {
+            e.stopPropagation();
+            const copy = { ...currentRects[idx] };
+            currentRects.push(copy);
+            pageRects[currentPageId] = currentRects;
+            renderRects();
+          });
+          $d.on("click", ".play", function (e) {
+            e.stopPropagation();
+            if (r.audio) {
+              audio.src = r.audio;
+              audio.play();
+            }
           });
         }
         function positionRect($d, r) {
@@ -245,6 +270,8 @@
             ...currentRects[idx],
             x: $d.position().left / vw,
             y: $d.position().top / vh,
+            w: $d.width() / vw,
+            h: $d.height() / vh,
           };
           pageRects[currentPageId] = currentRects;
         }
