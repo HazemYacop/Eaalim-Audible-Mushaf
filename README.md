@@ -1,52 +1,49 @@
 # Eaalim Audible Mushaf
 
-This web application turns the Eaalim Mushaf into an audible experience.
+This project turns the Eaalim Mushaf into an audible and interactive experience using Node.js and Express. Page images and audio clips are stored in Cloudflare R2 while metadata lives in PostgreSQL.
 
-## Running locally
+## Requirements
+- Node.js
+- PostgreSQL database
+- Cloudflare R2 bucket
 
-```
-npm install
-PORT=3000 node index.js
-```
+## Setup
+1. Copy `.env.example` to `.env` and fill in your configuration values.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the server:
+   ```bash
+   node index.js
+   ```
+   The application will use the port defined in the `PORT` variable (defaults to `3000`).
+
+## Environment variables
+The application relies on the following variables:
+
+- `DB_URL` – PostgreSQL connection string
+- `SESSION_SECRET` – secret used to sign session cookies
+- `R2_BUCKET` – name of your Cloudflare R2 bucket
+- `R2_ACCESS_KEY_ID` – access key ID for R2
+- `R2_SECRET_ACCESS_KEY` – secret access key for R2
+- `PORT` – port to run the local server (e.g. `3000`)
+- `NODE_ENV` – `development` or `production`
 
 ## Deploying to Vercel
+1. Import this repository into [Vercel](https://vercel.com/).
+2. Define the same environment variables in the Vercel dashboard.
+3. Deploy. All requests are routed to `api/index.js`, which loads the Express app from `index.js`.
 
-1. Create a project in [Vercel](https://vercel.com/) and import this
-   repository.
-2. Add the required environment variables (`DB_URL`, `SESSION_SECRET`,
-   `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, etc.) in the Vercel
-   dashboard.
-3. Deploy. All requests are routed to `api/index.js` which loads the Express
-   app exported from `index.js`.
+When running locally or on another platform the app listens on `PORT` as a normal Express server. On Vercel the function handler is used instead so the server becomes serverless.
 
-When running locally or on another platform, the app listens on `PORT` as
-usual. On Vercel the function handler is used instead, so the server is
-serverless.
+## API
+Public endpoints provide access to hokm, juz and page data:
 
-## Restoring deleted files
+- `GET /api/hokm` – list available hokm categories
+- `GET /api/ajza/:hokmId` – list Juz for a hokm
+- `GET /api/pages/:juzaId` – list pages for a Juz
 
-If page images or audio clips are removed from Cloudflare R2 but their
-URLs are still present in the database you can restore them using the
-`scripts/restoreJuz30.js` helper. This script expects the local folder
-structure to be `<hokm>/<page number>/<files>` and uploads the files to
-the exact paths stored in the database for Juz&nbsp;30. The R2 bucket uses
-two top‑level folders, **images** and **audios**, and the restore helper
-places each file back in its recorded location. Page folders can either
-use the same page numbers stored in the database or start from **1**
-(useful when they contain only the pages of Juz&nbsp;30). The script
-detects any numbering offset automatically. If the stored URLs begin with
-`uploads/`, the helper rewrites them to the appropriate folder and
-updates the database with fully qualified URLs using the public R2 base.
-Audio files are matched by name when possible but will be used in order if
-no matching file is found. Existing objects are checked before upload so
-running the script multiple times doesn’t reupload unchanged files.
+The `/factory` area (behind login) lets administrators upload pages, audio clips and manage hotspots.
 
-Usage:
-
-```bash
-node scripts/restoreJuz30.js /path/to/local/folder
-```
-
-The script relies on the same environment variables used by the
-application (`DB_URL`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, and
-`R2_SECRET_ACCESS_KEY`).
+Restoration helpers were removed in the latest update – page images and audio clips must now be reuploaded manually if deleted.
