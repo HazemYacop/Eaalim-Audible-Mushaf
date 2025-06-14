@@ -441,16 +441,19 @@ app.delete(
       "SELECT image_url,hotspots FROM juza_page WHERE id=$1",
       [req.params.pageId]
     );
-    if (!rows.length) return res.sendStatus(404);
-    const { image_url, hotspots } = rows[0];
-    const audios = [];
-    try {
-      (Array.isArray(hotspots) ? hotspots : JSON.parse(hotspots || "[]")).forEach(
-        (h) => h.audio && audios.push(h.audio)
-      );
-    } catch {}
-    await deleteFromR2([image_url, ...audios]);
-    await pool.query("DELETE FROM juza_page WHERE id=$1", [req.params.pageId]);
+    if (rows.length) {
+      const { image_url, hotspots } = rows[0];
+      const audios = [];
+      try {
+        (Array.isArray(hotspots) ? hotspots : JSON.parse(hotspots || "[]")).forEach(
+          (h) => h.audio && audios.push(h.audio)
+        );
+      } catch {}
+      await deleteFromR2([image_url, ...audios]);
+      await pool.query("DELETE FROM juza_page WHERE id=$1", [req.params.pageId]);
+    } else {
+      await pool.query("DELETE FROM juza_page WHERE id=$1", [req.params.pageId]);
+    }
     res.sendStatus(204);
   })
 );
