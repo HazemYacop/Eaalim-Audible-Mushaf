@@ -173,13 +173,20 @@ const uploadToR2 = async (file, folder = "") => {
 
 const deleteFromR2 = async (urls = []) => {
   if (!Array.isArray(urls) || !urls.length) return;
-  const Objects = urls
-    .filter(Boolean)
-    .map((u) => ({ Key: new URL(u).pathname.slice(1) }));
+  const Objects = [];
+  for (const u of urls.filter(Boolean)) {
+    try {
+      Objects.push({ Key: new URL(u).pathname.slice(1) });
+    } catch {
+      Objects.push({ Key: u.replace(/^\//, "") });
+    }
+  }
   if (!Objects.length) return;
-  await s3
-    .deleteObjects({ Bucket: process.env.R2_BUCKET, Delete: { Objects } })
-    .promise();
+  try {
+    await s3
+      .deleteObjects({ Bucket: process.env.R2_BUCKET, Delete: { Objects } })
+      .promise();
+  } catch {}
 };
 
 app.post(
@@ -441,15 +448,16 @@ app.delete(
       "SELECT image_url,hotspots FROM juza_page WHERE id=$1",
       [req.params.pageId]
     );
-    if (!rows.length) return res.sendStatus(404);
-    const { image_url, hotspots } = rows[0];
-    const audios = [];
-    try {
-      (Array.isArray(hotspots) ? hotspots : JSON.parse(hotspots || "[]")).forEach(
-        (h) => h.audio && audios.push(h.audio)
-      );
-    } catch {}
-    await deleteFromR2([image_url, ...audios]);
+    if (rows.length) {
+      const { image_url, hotspots } = rows[0];
+      const audios = [];
+      try {
+        (Array.isArray(hotspots) ? hotspots : JSON.parse(hotspots || "[]")).forEach(
+          (h) => h.audio && audios.push(h.audio)
+        );
+      } catch {}
+      await deleteFromR2([image_url, ...audios]);
+    }
     await pool.query("DELETE FROM juza_page WHERE id=$1", [req.params.pageId]);
     res.sendStatus(204);
   })
