@@ -173,13 +173,20 @@ const uploadToR2 = async (file, folder = "") => {
 
 const deleteFromR2 = async (urls = []) => {
   if (!Array.isArray(urls) || !urls.length) return;
-  const Objects = urls
-    .filter(Boolean)
-    .map((u) => ({ Key: new URL(u).pathname.slice(1) }));
+  const Objects = [];
+  for (const u of urls.filter(Boolean)) {
+    try {
+      Objects.push({ Key: new URL(u).pathname.slice(1) });
+    } catch {
+      Objects.push({ Key: u.replace(/^\//, "") });
+    }
+  }
   if (!Objects.length) return;
-  await s3
-    .deleteObjects({ Bucket: process.env.R2_BUCKET, Delete: { Objects } })
-    .promise();
+  try {
+    await s3
+      .deleteObjects({ Bucket: process.env.R2_BUCKET, Delete: { Objects } })
+      .promise();
+  } catch {}
 };
 
 app.post(
