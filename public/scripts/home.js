@@ -107,11 +107,11 @@ function bindUiEvents() {
   });
 
   /* navigation --------------------------------------------------------- */
-  $("#prev").on("click", (e) => {
+  $(".prev").on("click", (e) => {
     e.preventDefault();
     if (idx) loadImg(idx - 1);
   });
-  $("#next").on("click", (e) => {
+  $(".next").on("click", (e) => {
     e.preventDefault();
     if (idx < pages.length - 1) loadImg(idx + 1);
   });
@@ -162,8 +162,8 @@ function selectJuz(id, push = true) {
 /* ───────────── 6. PAGE / HOTSPOTS ───────── */
 function loadImg(i) {
   idx = i;
-  $("#prev").toggleClass("disabled", idx === 0);
-  $("#next").toggleClass("disabled", idx === pages.length - 1);
+  $(".prev").toggleClass("disabled", idx === 0);
+  $(".next").toggleClass("disabled", idx === pages.length - 1);
 
   $("#page-holder")
     .attr("src", pages[idx].image_url)
