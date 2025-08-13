@@ -224,12 +224,12 @@
   .dropdown-btn {
     min-width: 0;
     padding: 20px 30px;
-    font: 500 18px "Roboto", sans-serif;
+    font: 500 16px "Roboto", sans-serif;
   }
 
   .dropdown-list li {
     padding: 1.5vh 1vw;
-    font: 18px "Basic", sans-serif;
+    font: 16px "Basic", sans-serif;
   }
 
   .show-audios-checkbox {
@@ -252,7 +252,7 @@
   }
 
   .nav-arrow>i {
-    font-size: 30px;
+    font-size: 20px;
   }
 }
 
@@ -269,13 +269,8 @@
   }
 
   .show-audios-checkbox {
-    gap: 3vw;
-    font: 500 24px "Roboto", sans-serif;
-  }
-
-  .show-audios-checkbox input {
-    width: 3vw;
-    height: 3vw;
+    gap: 20px;
+    font: 500 16px "Roboto", sans-serif;
   }
 
   #page-holder {
@@ -283,8 +278,8 @@
   }
 
   #toggle-audios {
-    width: 20px;
-    height: 20px;
+    width: 10px;
+    height: 10px;
   }
 }
 
