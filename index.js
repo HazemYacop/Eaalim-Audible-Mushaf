@@ -57,7 +57,19 @@ app.set("view engine", "ejs");
 app.use(express.static(path.join(ROOT_PATH, "public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(helmet({ contentSecurityPolicy: false }));
+// Allow embedding in iframes by disabling the default X-Frame-Options header.
+// Optionally set FRAME_ANCESTORS env (comma separated) to lock framing to specific hosts.
+const frameAncestors =
+  process.env.FRAME_ANCESTORS?.split(",").map((v) => v.trim()).filter(Boolean) ||
+  [];
+const helmetOptions = { contentSecurityPolicy: false, frameguard: false };
+if (frameAncestors.length) {
+  helmetOptions.contentSecurityPolicy = {
+    useDefaults: true,
+    directives: { frameAncestors },
+  };
+}
+app.use(helmet(helmetOptions));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 500 }));
 app.set("trust proxy", 1);
 app.use(
