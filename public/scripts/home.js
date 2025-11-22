@@ -1,29 +1,27 @@
 /* global $, Audio */
 
-/* ──────────────── 1. STATE ──────────────── */
-let pages = []; // pages in the currently‑selected juzʾ
-let idx = 0; // page that is shown right now
-let currentHokmId = null; // uuid of the selected ḥukm
+let pages = [];
+let idx = 0;
+let currentHokmId = null;
 const audio = new Audio();
 
-/* ──────────────── 2. BOOT ───────────────── */
 $(async () => {
   await buildHokmDropdown();
   bindUiEvents();
 
-  /* deep‑link handling → /view/{hokmId}/{juzaId} */
   const m = location.pathname.match(/^\/view\/([^/]+)\/([^/]+)/);
   if (m) {
     const [, hk, jz] = m;
-    await selectHokm(hk, false); // false → don’t pushState again
-    await selectJuz(jz, false);
+    await selectHokm(hk, {
+      juzaId: jz,
+      push: false,
+      autoSelectFirst: false,
+    });
   }
 
-  /* honour “show audios” checkbox on first load */
   if (!$("#toggle-audios").prop("checked")) $("body").addClass("hide-audios");
 });
 
-/* ───────────── 3. DROPDOWNS ────────────── */
 async function buildHokmDropdown() {
   const list = await $.getJSON("/api/hokm").catch(() => []);
   const $ul = $("#hokm-ul").empty();
@@ -44,12 +42,10 @@ function buildJuzDropdown(list) {
        </li>`
     )
   );
-  $("#juz-btn").prop("disabled", !list.length).find("p").text("Choose Juzʾ");
+  $("#juz-btn").prop("disabled", !list.length).find("p").text("Choose JuzE_");
 }
 
-/* ───────────── 4. UI EVENTS ────────────── */
 function bindUiEvents() {
-  /* dropdown open / close */
   $(document).on("click", ".dropdown-btn", function (e) {
     e.stopPropagation();
     const $list = $(this).next(".dropdown-list");
@@ -61,52 +57,20 @@ function bindUiEvents() {
     if (!$(e.target).closest(".list-dropdown").length) closeDropdowns();
   });
 
-  /* select ḥukm -------------------------------------------------------- */
   $("#hokm-ul").on("click", "li[data-hokm]", async function () {
-    currentHokmId = $(this).data("hokm");
-    const name = $(this).text();
-
-    $("#hokm-btn p").text(name);
-    $("#hokm-ul li").removeClass("selected");
-    $(this).addClass("selected");
-    closeDropdowns();
-
-    $("#juz-btn").prop("disabled", true).find("p").text("Loading…");
-
-    const juzList = await $.getJSON("/api/ajza/" + currentHokmId).catch(
-      () => []
-    );
-    buildJuzDropdown(juzList);
-    if (juzList.length) $("#juz-ul li").first().trigger("click");
+    const hokmId = $(this).data("hokm");
+    await selectHokm(hokmId, { push: true, autoSelectFirst: true });
   });
 
-  /* select juzʾ -------------------------------------------------------- */
   $("#juz-ul").on("click", "li[data-id]", async function () {
     const juzaId = $(this).data("id");
-    const juzaNum = $(this).data("num");
-
-    $("#juz-btn p").text("Juzʾ " + juzaNum);
-    closeDropdowns();
-
-    /* copy‑and‑paste‑able URL */
-    if (currentHokmId) {
-      history.pushState(
-        { hokmId: currentHokmId, juzaId },
-        "",
-        `/view/${currentHokmId}/${juzaId}`
-      );
-    }
-
-    pages = await $.getJSON("/api/pages/" + juzaId).catch(() => []);
-    pages.length ? loadImg(0) : $("#page-holder").hide();
+    await selectJuz(juzaId, { push: true });
   });
 
-  /* show / hide hotspot outlines -------------------------------------- */
   $("#toggle-audios").on("change", function () {
     $("body").toggleClass("hide-audios", !this.checked);
   });
 
-  /* navigation --------------------------------------------------------- */
   $(".prev").on("click", (e) => {
     e.preventDefault();
     if (idx) loadImg(idx - 1);
@@ -120,46 +84,90 @@ function bindUiEvents() {
     if (e.key === "ArrowRight" && idx < pages.length - 1) loadImg(idx + 1);
   });
 
-  /* keep hotspots aligned on resize ----------------------------------- */
   $(window).on(
     "resize orientationchange",
     () => pages.length && renderHotspots()
   );
 
-  /* Back / Forward buttons -------------------------------------------- */
   window.addEventListener("popstate", (ev) => {
     const st = ev.state;
     if (!st) return;
-    selectHokm(st.hokmId, false).then(() => selectJuz(st.juzaId, false));
+    selectHokm(st.hokmId, {
+      juzaId: st.juzaId,
+      push: false,
+      autoSelectFirst: false,
+    });
   });
 }
 
-/* ───────────── 5. HELPERS ─────────────── */
 function closeDropdowns() {
   $(".dropdown-list").removeClass("show");
   $(".dropdown-btn i").removeClass("rotated");
 }
 
-function selectHokm(id, push = true) {
-  if (id === currentHokmId) return Promise.resolve();
-  return new Promise((res) => {
-    $('#hokm-ul li[data-hokm="' + id + '"]')
-      .one("click", res)
-      .click();
-    if (push) history.pushState({}, "", "/view/" + id);
-  });
+async function selectHokm(
+  id,
+  { juzaId = null, push = true, autoSelectFirst = true } = {}
+) {
+  if (id === currentHokmId && !juzaId) return;
+
+  currentHokmId = id;
+  pages = [];
+  idx = 0;
+  $("#page-holder").hide();
+
+  const $item = $('#hokm-ul li[data-hokm="' + id + '"]');
+  if ($item.length) {
+    $("#hokm-btn p").text($item.text());
+    $("#hokm-ul li").removeClass("selected");
+    $item.addClass("selected");
+  }
+  closeDropdowns();
+
+  $("#juz-btn").prop("disabled", true).find("p").text("Loading...");
+
+  const juzList = await $.getJSON("/api/ajza/" + id).catch(() => []);
+  buildJuzDropdown(juzList);
+
+  if (!juzList.length) {
+    $("#juz-btn").prop("disabled", true).find("p").text("No JuzE_");
+    return;
+  }
+
+  const hasTarget = juzaId && juzList.some((j) => j.id === juzaId);
+  const targetJuzaId = hasTarget
+    ? juzaId
+    : autoSelectFirst
+    ? juzList[0].id
+    : null;
+
+  if (targetJuzaId) {
+    await selectJuz(targetJuzaId, { push });
+  }
 }
 
-function selectJuz(id, push = true) {
-  return new Promise((res) => {
-    $('#juz-ul li[data-id="' + id + '"]')
-      .one("click", res)
-      .click();
-    /* push handled in click handler when push is true */
-  });
+async function selectJuz(id, { push = true } = {}) {
+  const $li = $('#juz-ul li[data-id="' + id + '"]');
+  if (!$li.length) return;
+
+  const juzaNum = $li.data("num");
+  $("#juz-ul li").removeClass("selected");
+  $li.addClass("selected");
+  $("#juz-btn p").text("Juz " + juzaNum);
+  closeDropdowns();
+
+  if (currentHokmId && push) {
+    history.pushState(
+      { hokmId: currentHokmId, juzaId: id },
+      "",
+      `/view/${currentHokmId}/${id}`
+    );
+  }
+
+  pages = await $.getJSON("/api/pages/" + id).catch(() => []);
+  pages.length ? loadImg(0) : $("#page-holder").hide();
 }
 
-/* ───────────── 6. PAGE / HOTSPOTS ───────── */
 function loadImg(i) {
   idx = i;
   $(".prev").toggleClass("disabled", idx === 0);
